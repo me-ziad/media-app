@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap'); *{
+    margin: 0;
+    padding:0;
+ }
+
+ body{
+   background-color: #d8d8d8;
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+ }
+a{
+   text-decoration: none;
+}
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5); 
+  z-index: 999;
+}
+ 
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+   border-radius: 10px;
+  max-height: 95vh;
+  margin-top: 13;
+  padding: 1rem;
+  overflow-y: auto;
+  z-index: 1000; 
+  margin: auto;
+  transform: translate(-50%, -50%);  
+}
+.modalImg {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 10px;
+  max-height: 95vh;
+  padding: 1rem;
+  overflow: hidden;
+  z-index: 1000;
+  margin: auto;
+  width: 600px; /* ✅ عرض ثابت */
+  height: 400px; /* ✅ ارتفاع ثابت */
+  background-color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+/* شاشات أكبر من 600px */
+html, body {
+  overflow-x: hidden;
+}
+@media (max-width: 600px) {
+  .modal {
+    width: 400px;
+  margin-top: 0;
+  }
+  .modalImg {
+  width: 320px; 
+  height: 320px;  
+}
+}
+/* شاشات أكبر من 600px */
+@media (min-width: 600px) {
+  .modal {
+    width: 800px;
+  }
+ 
+}
+
+/* شاشات أكبر من 600px */
+@media (min-width: 600px) {
+  .modal {
+    width: 520px;
+  }
+  .modalImg {
+  width: 550;  
+  height: 500px; 
+}
+}
+
+/* شاشات أكبر من 900px */
+@media (min-width: 900px) {
+  .modal {
+    width: 693px;
+  }
+.modalImg {
+  width: 800px; 
+  height: 600px; 
+}
+}
+
