@@ -4,55 +4,86 @@ import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
 import {
-  Box, FormHelperText, FormControl, InputLabel,
-  Button, OutlinedInput, Typography, RadioGroup,
-  Radio, FormControlLabel, Paper, TextField,
-  useTheme
+  Box,
+  TextField,
+  Typography,
+  Button,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  CircularProgress,
+  useTheme,
+  Paper,
 } from "@mui/material";
-import { PersonAdd, HowToReg } from "@mui/icons-material";
+import { motion } from "framer-motion";
+import { PersonAddAlt } from "@mui/icons-material";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
 export default function Register() {
+  // Local loading state
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-    const theme = useTheme();
-    const { t } = useTranslation();
 
-  // title
+  // Next.js router for navigation
+  const router = useRouter();
+
+  // MUI theme for dynamic styling
+  const theme = useTheme();
+
+  // Translation function
+  const { t } = useTranslation();
+
+  // Set page title on component mount
   useEffect(() => {
     document.title = "Register";
   }, []);
 
+  // Function to handle registration form submission
   async function registerForm(values) {
-    setLoading(true);
+    setLoading(true); // Set loading state before API call
     try {
+      // Make POST request to signup API
       const { data } = await axios.post(
         "https://linked-posts.routemisr.com/users/signup",
         values
       );
+
+      // Show success message
       toast.success(data.message);
-      setLoading(false);
+
+      // Redirect to login page after successful registration
       router.push("/login");
     } catch (err) {
+      // Show error message if registration fails
       toast.error(err?.response?.data?.error || "Registration failed");
-      setLoading(false);
+    } finally {
+      setLoading(false); // Reset loading state
     }
   }
 
+  // Validation schema using Yup
   const validationSchema = yup.object({
-    name: yup.string().required(t("Nameisrequired")).min(3, t("Min3characters")).max(15, t("Max15characters")),
-    email: yup.string().required(t("Emailisrequired")).email(t('Invalidemail')).max(60, t("Max60characters")),
-    password: yup.string().required(t("Passwordisrequired")).min(8, t("Min8characters")).max(20, t("Max20characters"))
-      .matches(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-])/, t("UseastrongpasswordlikeZiad42512")),
-    rePassword: yup.string().required(t("Confirmyourpassword"))
-      .oneOf([yup.ref("password")], t("Passwordsmustmatch")),
-    dateOfBirth: yup.string().required(t("Dateofbirthisrequired")),
-    gender: yup.string().required(t("Genderisrequired")),
+    name: yup.string().required("Name is required").min(3).max(15),
+    email: yup.string().required("Email is required").email().max(60),
+    password: yup
+      .string()
+      .required("Password is required")
+      .min(8)
+      .matches(
+        /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-])/,
+        "Use a strong password"
+      ),
+    rePassword: yup
+      .string()
+      .required("Confirm password is required")
+      .oneOf([yup.ref("password")], "Passwords must match"),
+    dateOfBirth: yup.string().required("Date of birth is required"),
+    gender: yup.string().required("Gender is required"),
   });
 
+  // Initialize Formik for form handling
   const formik = useFormik({
     initialValues: {
       name: "",
@@ -70,135 +101,332 @@ export default function Register() {
     <Box
       sx={{
         minHeight: "100vh",
-         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        py: 6,
-        mt:3
+        mt: 2,
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+        background:
+          "url('https://images.unsplash.com/photo-1506765515384-028b60a970df?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-   
- 
-      <Paper elevation={5} sx={{
-        width: { xs: "90%", sm: "80%", md: "55%", lg: "40%" },
-        p: 4,
-        borderRadius: 3,
-                   bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#fafafa",
-      }}>
-        <Typography variant="h5" textAlign="center" fontWeight="bold" color="primary">
-          {t('CreateYourAccount')}  
-        </Typography>
-        <Typography variant="body2" textAlign="center" mt={1} mb={3} color="text.secondary">
-          {t('Joinnowandstart')}.
-        </Typography>
+      {/* Dark overlay for background contrast */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.4)",
+          zIndex: 0,
+        }}
+      />
 
-        <Box component="form" onSubmit={formik.handleSubmit}>
-          {/* Name */}
-          <FormControl fullWidth margin="normal" error={formik.touched.name && Boolean(formik.errors.name)}>
-            <InputLabel>{t('Name')}</InputLabel>
-            <OutlinedInput
-              id="name"
-              name="name"
-              label="Name"
-              value={formik.values.name}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-            />
-            <FormHelperText>{formik.touched.name && formik.errors.name}</FormHelperText>
-          </FormControl>
-
-          {/* Email */}
-          <FormControl fullWidth margin="normal" error={formik.touched.email && Boolean(formik.errors.email)}>
-            <InputLabel>{t('Email')}</InputLabel>
-            <OutlinedInput
-              id="email"
-              name="email"
-              label="Email"
-              type="email"
-              value={formik.values.email}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-            />
-            <FormHelperText>{formik.touched.email && formik.errors.email}</FormHelperText>
-          </FormControl>
-
-          {/* Password */}
-          <FormControl fullWidth margin="normal" error={formik.touched.password && Boolean(formik.errors.password)}>
-            <InputLabel>{t('Password')}</InputLabel>
-            <OutlinedInput
-              id="password"
-              name="password"
-              label="Password"
-              type="password"
-              value={formik.values.password}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-            />
-            <FormHelperText>{formik.touched.password && formik.errors.password}</FormHelperText>
-          </FormControl>
-
-          {/* RePassword */}
-          <FormControl fullWidth margin="normal" error={formik.touched.rePassword && Boolean(formik.errors.rePassword)}>
-            <InputLabel>{t('ConfirmPassword')}</InputLabel>
-            <OutlinedInput
-              id="rePassword"
-              name="rePassword"
-              label="Confirm Password"
-              type="password"
-              value={formik.values.rePassword}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-            />
-            <FormHelperText>{formik.touched.rePassword && formik.errors.rePassword}</FormHelperText>
-          </FormControl>
-
-          {/* Birth Date */}
-          <TextField
-            fullWidth
-            margin="normal"
-            id="dateOfBirth"
-            name="dateOfBirth"
-            label={t("DateofBirth")}
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            value={formik.values.dateOfBirth}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.dateOfBirth && Boolean(formik.errors.dateOfBirth)}
-            helperText={formik.touched.dateOfBirth && formik.errors.dateOfBirth}
-          />
-
-          {/* Gender */}
-          <FormControl sx={{ mt: 2 }} error={formik.touched.gender && Boolean(formik.errors.gender)}>
-            <RadioGroup row name="gender" value={formik.values.gender} onChange={formik.handleChange}>
-              <FormControlLabel value="male" control={<Radio />} label={t("Male")} />
-              <FormControlLabel value="female" control={<Radio />} label={t("Female")} />
-            </RadioGroup>
-            <FormHelperText>{formik.touched.gender && formik.errors.gender}</FormHelperText>
-          </FormControl>
-
-          {/* Submit */}
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            startIcon={!loading && <PersonAdd />}
+      {/* Left section - info/welcome panel (hidden on small screens) */}
+      <Box
+        sx={{
+          display: { xs: "none", md: "flex" },
+          alignItems: "center",
+          justifyContent: "center",
+          color: theme.palette.mode === "dark" ? "#fff" : "#111",
+          position: "relative",
+          zIndex: 1,
+          p: 6,
+        }}
+      >
+        <Box
+          sx={{
+            p: 6,
+            borderRadius: 5,
+            backdropFilter: "blur(25px) saturate(180%)",
+            background:
+              theme.palette.mode === "dark"
+                ? "linear-gradient(135deg, rgba(20,20,20,0.7), rgba(40,40,40,0.5))"
+                : "linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15))",
+            border:
+              theme.palette.mode === "dark"
+                ? "1px solid rgba(255,255,255,0.1)"
+                : "1px solid rgba(0,0,0,0.15)",
+            boxShadow:
+              theme.palette.mode === "dark"
+                ? "0 8px 32px rgba(0,0,0,0.6), inset 0 0 40px rgba(255,255,255,0.05)"
+                : "0 0px 0px rgba(31,38,135,0.25), inset 0 0 40px rgba(255,255,255,0.15)",
+            textAlign: "center",
+            maxWidth: "400px",
+            transition: "all 0.4s ease",
+          }}
+        >
+          {/* Welcome heading */}
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            gutterBottom
             sx={{
-              mt: 3,
-              fontWeight: "bold",
-              fontSize: "1rem",
-              py: 1.5,
-              textTransform: "none",
+              textShadow:
+                theme.palette.mode === "dark"
+                  ? "0 0 12px rgba(255,255,255,0.3)"
+                  : "0 0 12px rgba(0,0,0,0.15)",
             }}
           >
-            {loading ? (
-              <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "17px" }}></i>
-            ) : (
-              "Register"
-            )}
-          </Button>
+            {t("JoinOurCommunity")}
+          </Typography>
+          {/* Welcome subtitle */}
+          <Typography
+            variant="body1"
+            sx={{
+              opacity: theme.palette.mode === "dark" ? 0.9 : 0.85,
+            }}
+          >
+            {t("DiscoverAndConnectWithTheWorld")}
+          </Typography>
         </Box>
-      </Paper>
+      </Box>
+
+      {/* Right section - registration form */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          py: 8,
+          px: { xs: 3, sm: 6, md: 8 },
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        {/* Animated container */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          style={{ width: "100%" }}
+        >
+          {/* Paper component for form background */}
+          <Paper
+            elevation={20}
+            sx={{
+              p: 5,
+              borderRadius: 5,
+              backdropFilter: "blur(25px) saturate(180%)",
+              background:
+                theme.palette.mode === "dark"
+                  ? "linear-gradient(135deg, rgba(20,20,20,0.7), rgba(40,40,40,0.5))"
+                  : "linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15))",
+              border:
+                theme.palette.mode === "dark"
+                  ? "1px solid rgba(255,255,255,0.1)"
+                  : "1px solid rgba(0,0,0,0.15)",
+              boxShadow:
+                theme.palette.mode === "dark"
+                  ? "0 8px 32px rgba(0,0,0,0.6), inset 0 0 40px rgba(255,255,255,0.05)"
+                  : "0 8px 32px rgba(31,38,135,0.25), inset 0 0 40px rgba(255,255,255,0.15)",
+              color: theme.palette.mode === "dark" ? "#fff" : "#111",
+              transition: "all 0.4s ease",
+            }}
+          >
+            {/* Icon and form heading */}
+            <Box textAlign="center" mb={3}>
+              <PersonAddAlt
+                sx={{
+                  fontSize: 50,
+                  color: theme.palette.primary.main,
+                  mb: 1,
+                  textShadow: "0 0 10px rgba(25,118,210,0.6)",
+                }}
+              />
+              <Typography
+                variant="h5"
+                fontWeight="bold"
+                gutterBottom
+                sx={{ textShadow: "0 0 8px rgba(255,255,255,0.3)" }}
+              >
+                {t("CreateYourAccount")}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.9 }}>
+                {t("Joinnowandstart")}
+              </Typography>
+            </Box>
+
+            {/* Registration form */}
+            <Box
+              component="form"
+              onSubmit={formik.handleSubmit}
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
+              {/* Name field */}
+              <TextField
+                label={t("Name")}
+                name="name"
+                value={formik.values.name}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.name && Boolean(formik.errors.name)}
+                helperText={formik.touched.name && formik.errors.name}
+                fullWidth
+                InputProps={{
+                  sx: {
+                    borderRadius: 3,
+                    backgroundColor: "rgba(255,255,255,0.15)",
+                    color: theme.palette.mode === "dark" ? "#f5f5f5" : "#111",
+                  },
+                }}
+                InputLabelProps={{
+                  sx: {
+                    color: theme.palette.mode === "dark" ? "#aaa" : "#555",
+                    "&.Mui-focused": { color: "#fff" },
+                  },
+                }}
+              />
+
+              {/* Email field */}
+              <TextField
+                label={t("Email")}
+                name="email"
+                type="email"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.email && Boolean(formik.errors.email)}
+                helperText={formik.touched.email && formik.errors.email}
+                fullWidth
+                InputProps={{
+                  sx: {
+                    borderRadius: 3,
+                    backgroundColor: "rgba(255,255,255,0.15)",
+                    color: theme.palette.mode === "dark" ? "#f5f5f5" : "#111",
+                  },
+                }}
+                InputLabelProps={{
+                  sx: {
+                    color: theme.palette.mode === "dark" ? "#aaa" : "#555",
+                    "&.Mui-focused": { color: "#fff" },
+                  },
+                }}
+              />
+
+              {/* Password and confirm password fields */}
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <TextField
+                  label={t("Password")}
+                  name="password"
+                  type="password"
+                  value={formik.values.password}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.password && Boolean(formik.errors.password)}
+                  helperText={formik.touched.password && formik.errors.password}
+                  fullWidth
+                  InputProps={{
+                    sx: {
+                      borderRadius: 3,
+                      backgroundColor: "rgba(255,255,255,0.15)",
+                      color: theme.palette.mode === "dark" ? "#f5f5f5" : "#111",
+                    },
+                  }}
+                  InputLabelProps={{
+                    sx: {
+                      color: theme.palette.mode === "dark" ? "#aaa" : "#555",
+                      "&.Mui-focused": { color: "#fff" },
+                    },
+                  }}
+                />
+                <TextField
+                  label={t("ConfirmPassword")}
+                  name="rePassword"
+                  type="password"
+                  value={formik.values.rePassword}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.rePassword && Boolean(formik.errors.rePassword)}
+                  helperText={formik.touched.rePassword && formik.errors.rePassword}
+                  fullWidth
+                  InputProps={{
+                    sx: {
+                      borderRadius: 3,
+                      backgroundColor: "rgba(255,255,255,0.15)",
+                      color: theme.palette.mode === "dark" ? "#f5f5f5" : "#111",
+                    },
+                  }}
+                  InputLabelProps={{
+                    sx: {
+                      color: theme.palette.mode === "dark" ? "#aaa" : "#555",
+                      "&.Mui-focused": { color: "#fff" },
+                    },
+                  }}
+                />
+              </Box>
+
+              {/* Date of birth field */}
+              <TextField
+                label={t("DateofBirth")}
+                name="dateOfBirth"
+                type="date"
+                InputLabelProps={{ shrink: true, style: { color: "#ccc" } }}
+                value={formik.values.dateOfBirth}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.dateOfBirth && Boolean(formik.errors.dateOfBirth)}
+                helperText={formik.touched.dateOfBirth && formik.errors.dateOfBirth}
+                fullWidth
+                InputProps={{
+                  sx: {
+                    borderRadius: 3,
+                    backgroundColor: "rgba(255,255,255,0.15)",
+                    color: theme.palette.mode === "dark" ? "#f5f5f5" : "#111",
+                  },
+                }}
+              />
+
+              {/* Gender radio buttons */}
+              <RadioGroup
+                row
+                name="gender"
+                value={formik.values.gender}
+                onChange={formik.handleChange}
+                sx={{ justifyContent: "center" }}
+              >
+                <FormControlLabel
+                  sx={{ color: "#fff" }}
+                  value="male"
+                  control={<Radio sx={{ color: "#90caf9" }} />}
+                  label={t("Male")}
+                />
+                <FormControlLabel
+                  sx={{ color: "#fff" }}
+                  value="female"
+                  control={<Radio sx={{ color: "#f48fb1" }} />}
+                  label={t("Female")}
+                />
+              </RadioGroup>
+
+              {/* Submit button */}
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                disabled={loading}
+                sx={{
+                  mt: 2,
+                  py: 1.4,
+                  fontWeight: 600,
+                  fontSize: "1rem",
+                  borderRadius: 3,
+                  textTransform: "none",
+                  background: "linear-gradient(90deg, #2196f3, #21cbf3)",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 6px 18px rgba(33,203,243,0.5)",
+                  },
+                }}
+              >
+                {/* Show loader when submitting */}
+                {loading ? <CircularProgress size={24} color="inherit" /> : t("Register")}
+              </Button>
+            </Box>
+          </Paper>
+        </motion.div>
+      </Box>
     </Box>
   );
 }

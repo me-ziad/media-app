@@ -5,7 +5,7 @@
 
  body{
    background-color: #d8d8d8;
-  font-family: "Montserrat", sans-serif;
+  font-family: "Montserrat", sans-serif !important;
   font-optical-sizing: auto;
  }
 a{
@@ -46,8 +46,8 @@ a{
   overflow: hidden;
   z-index: 1000;
   margin: auto;
-  width: 600px; /* ✅ عرض ثابت */
-  height: 400px; /* ✅ ارتفاع ثابت */
+  width: 600px;  
+  height: 400px; 
   background-color: #fff;
   display: flex;
   justify-content: center;

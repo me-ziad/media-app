@@ -74,14 +74,24 @@ const resources = {
       Setting:'Setting',
       Login:'Login',
       Register:'Register',
-      Pleaseselectavalidimagefile:'Please select avalid image file'
+      Pleaseselectavalidimagefile:'Please select avalid image file',
+      LoginToContinueYourJourney:'Log in to continue your journey',
+      EnterYourCredentials:'Enter your credentials',
+      JoinOurCommunity:'Join our community',
+      DiscoverAndConnectWithTheWorld:'Discover and connect with the world',
+      addposts:'add posts',
+
 
     }
   },
   ar: {
     translation: {
       Posts: 'المنشورات',
+      addposts:'أضافه منشور',
+      JoinOurCommunity:'انضم إلى مجتمعنا',
+      DiscoverAndConnectWithTheWorld:'اكتشف وتواصل مع العالم',
       Profile: 'الملف الشخصي',
+      EnterYourCredentials:'أدخل بيانات اعتمادك',
       Photo: 'الصوره',
       NewPassword: 'تغير الرقم السري',
       Logout : 'تسجيل   خروج',
@@ -149,7 +159,9 @@ const resources = {
       Setting:'الاعدادت',
       Login:'تسجيل الدخول',
       Register:"انشاء حساب",
-      Pleaseselectavalidimagefile:'الرجاء تحديد ملف الصورة الصالحة'
+      Pleaseselectavalidimagefile:'الرجاء تحديد ملف الصورة الصالحة',
+      LoginToContinueYourJourney:'تسجيل الدخول لمواصلة رحلتك',
+
     }
   }
 };

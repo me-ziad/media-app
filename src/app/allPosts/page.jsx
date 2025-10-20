@@ -2,81 +2,111 @@
 export const dynamic = "force-dynamic";
 
 import React, { useEffect, useState } from "react";
-import AuthGuard from "../authGuard/page,";
+import AuthGuard from "../authGuard/page,"; // Protects route for authenticated users
 import { useDispatch, useSelector } from "react-redux";
 import { getComment, getPosts } from "@/redux/Posts";
 import {
-  Grid, Card, CardHeader, CardMedia, CardContent,
-  CardActions, Avatar, IconButton, Typography, Box,
-  useTheme
+  Grid,
+  Card,
+  CardHeader,
+  CardMedia,
+  CardContent,
+  CardActions,
+  Avatar,
+  IconButton,
+  Typography,
+  Box,
+  useTheme,
 } from "@mui/material";
- import InsertCommentIcon from "@mui/icons-material/InsertComment";
-import Loading from "../loadingPosts/page";
-import AllComment from "../allComment/page";
+import InsertCommentIcon from "@mui/icons-material/InsertComment";
+import Loading from "../loadingPosts/page"; // Component for loading spinner
+import AllComment from "../allComment/page"; // Component to show all comments
+import CloseIcon from "@mui/icons-material/Close";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import SpeedDial from '@mui/material/SpeedDial';
-import SpeedDialIcon from '@mui/material/SpeedDialIcon';
-import EditIcon from '@mui/icons-material/Edit';
+import SpeedDial from "@mui/material/SpeedDial";
+import SpeedDialIcon from "@mui/material/SpeedDialIcon";
+import EditIcon from "@mui/icons-material/Edit";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import Head from 'next/head';
-
-
+import Head from "next/head";
 
 export default function AllPosts() {
-  const [modal, setModal] = useState(false);
-  const [modalImg, setModalImg] = useState(false);
-  const [showImg, setShowImg] = useState(false);
-  const [comId, setComId] = useState(null);
-  const { posts, loading } = useSelector((store) => store.postsReducer);
-    const { t } = useTranslation();
-  const dispatch = useDispatch();
+  const theme = useTheme();
   const router = useRouter();
-  const [page, setPage] = useState(1);
- const theme = useTheme();
+  const { t } = useTranslation();
+  const dispatch = useDispatch();
 
+  // Local states
+  const [comId, setComId] = useState(null); // Selected post ID for comments
+  const [modal, setModal] = useState(false); // Comment modal visibility
+  const [modalImg, setModalImg] = useState(false); // Image modal visibility
+  const [showImg, setShowImg] = useState(false); // Image to display in modal
+  const [page, setPage] = useState(1); // Current pagination page
+
+  // Redux store
+  const { posts, loading } = useSelector((store) => store.postsReducer);
+  const POSTS_PER_PAGE = 50; // Number of posts per page
+
+  const totalPages = posts?.total ? Math.ceil(posts.total / POSTS_PER_PAGE) : 5;
+
+  // Fetch posts whenever page changes
   useEffect(() => {
-    dispatch(getPosts({ limit: 50, page }));
-  }, [page]);
+    const apiPage = totalPages - page + 1; // Adjust for backend pagination
+    dispatch(getPosts({ limit: POSTS_PER_PAGE, page: apiPage }));
+  }, [page, totalPages]);
 
-  // title
+  // Sort posts by creation date (newest first)
+  const sortedPosts = posts?.posts
+    ?.slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  // Set document title
   useEffect(() => {
     document.title = "All posts";
   }, []);
 
-  const handleNextPage = () => setPage((prev) => prev + 1);
-  const handlePrevPage = () => page > 1 && setPage((prev) => prev - 1);
+  // Pagination handlers
+  const handleNextPage = () => setPage((prev) => Math.min(prev + 1, totalPages));
+  const handlePrevPage = () => setPage((prev) => Math.max(prev - 1, 1));
 
+  // Open comment modal for specific post
   const handelModal = (id) => {
-    dispatch(getComment(id));
+    dispatch(getComment(id)); // Fetch comments
     setModal(true);
     setComId(id);
   };
 
-
-    const handelImage = (imgs)=>{
-          setShowImg(imgs)
-          setModalImg(true)
-    }
+  // Open image modal
+  const handelImage = (imgs) => {
+    setShowImg(imgs);
+    setModalImg(true);
+  };
 
   return (
-    <AuthGuard>     
-            <Head>
-         <meta name="description" content="All posts" />
+    <AuthGuard>
+      {/* Page meta */}
+      <Head>
+        <meta name="description" content="All posts" />
       </Head>
-       <Box sx={{ position: "fixed", bottom: 0, right: 0 }}>
+
+      {/* Floating button to add a new post */}
+      <Box sx={{ position: "fixed", bottom: 0, right: 0 }}>
         <SpeedDial
           ariaLabel="Add Post"
           sx={{ position: "fixed", bottom: 16, right: 16, zIndex: 9999 }}
           icon={<SpeedDialIcon openIcon={<EditIcon />} />}
-          onClick={() => router.push('/addPost')}
+          onClick={() => router.push("/addPost")}
         />
       </Box>
 
-      {loading ? <Loading /> : (
+      {/* Loading spinner */}
+      {loading ? (
+        <Loading />
+      ) : (
         <>
-           <Grid
+          {/* Posts Grid */}
+          <Grid
             container
             spacing={2}
             sx={{
@@ -87,18 +117,19 @@ export default function AllPosts() {
               mt: 12,
             }}
           >
-            {posts?.posts?.map((item) => (
-              <Card 
+            {sortedPosts?.map((item) => (
+              <Card
                 key={item.id}
                 sx={{
                   width: { xs: "90%", sm: 500, md: 700 },
                   my: 2,
                   boxShadow: 4,
                   borderRadius: 3,
-                   bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#fafafa",
-
+                  bgcolor:
+                    theme.palette.mode === "dark" ? "#1e1e1e" : "#fafafa",
                 }}
               >
+                {/* Post header with user info */}
                 <CardHeader
                   avatar={
                     <Avatar
@@ -107,37 +138,32 @@ export default function AllPosts() {
                       sx={{ width: 45, height: 45 }}
                     />
                   }
-                  title={
-                    <Typography fontWeight="bold">
-                      {item?.user?.name}
-                    </Typography>
-                  }
+                  title={<Typography fontWeight="bold">{item?.user?.name}</Typography>}
                   subheader={item?.createdAt?.split("T")?.[0] ?? ""}
                 />
-                {item?.image && (
-                  <CardMedia onClick={()=>handelImage(item?.image)}
-                    component="img"
-                    height="300"
-                    image={item?.image}
-                    alt="post image"
-                    sx={{
-                      objectFit: "cover",
-                      borderRadius: "0 0 12px 12px",
-                      cursor:'pointer'
-                    }}
-                  />
-                )}
+
+                {/* Post content */}
                 <CardContent>
                   <Typography variant="body2" color="text.secondary">
                     {item?.body}
                   </Typography>
                 </CardContent>
+
+                {/* Post image */}
+                {item?.image && (
+                  <CardMedia
+                    onClick={() => handelImage(item?.image)}
+                    component="img"
+                    height="300"
+                    image={item?.image}
+                    alt="post image"
+                    sx={{ objectFit: "cover", cursor: "pointer" }}
+                  />
+                )}
+
+                {/* Post actions */}
                 <CardActions
-                  sx={{
-                    display: 'flex',
-                    justifyContent: "center",
-                    alignItems: 'center'
-                  }}
+                  sx={{ display: "flex", justifyContent: "center", alignItems: "center", my: 1 }}
                   disableSpacing
                 >
                   <IconButton onClick={() => handelModal(item.id)} aria-label="comment">
@@ -148,7 +174,8 @@ export default function AllPosts() {
             ))}
           </Grid>
 
-           <Box
+          {/* Pagination controls */}
+          <Box
             sx={{
               position: "fixed",
               bottom: 20,
@@ -162,7 +189,7 @@ export default function AllPosts() {
               borderRadius: "30px",
               px: 3,
               py: 1,
-              alignItems: "center"
+              alignItems: "center",
             }}
           >
             <IconButton
@@ -173,8 +200,19 @@ export default function AllPosts() {
               <ArrowBackIosNewIcon />
             </IconButton>
 
-            <Typography variant="body2" sx={{ fontWeight: "bold",fontSize:{xs:12, md:14},display:'flex', justifyContent:'center',alignItems:'center' , gap:1}}>
-             <span>  {t('page')} </span><span> {page}</span>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: "bold",
+                fontSize: { xs: 12, md: 14 },
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
+              <span>{t("page")}</span>
+              <span> {page}</span>
             </Typography>
 
             <IconButton
@@ -187,21 +225,74 @@ export default function AllPosts() {
         </>
       )}
 
-       {modal && (
+      {/* Comment modal */}
+      {modal && (
         <>
           <div className="backdrop" onClick={() => setModal(false)} />
-          <Box sx={{bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#f5f5f5",}} className="modal">
+          <Box sx={{ bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#f5f5f5" }}>
             <AllComment id={comId} setModal={setModal} />
           </Box>
         </>
       )}
-       {modalImg===true && (
-        <>
-          <div className="backdrop" onClick={() => setModalImg(false)} />
-          <Box sx={{bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#f5f5f5",}} className="modalImg">
-                <img src={showImg} alt="" style={{width: "100%",height: "100%",objectFit: "cover",borderRadius: "8px"}}/>
+
+      {/* Image modal */}
+      {modalImg && (
+        <Box
+          sx={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 2000,
+            bgcolor: "rgba(0,0,0,0.92)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            animation: "fadeIn 0.3s ease",
+            "@keyframes fadeIn": { from: { opacity: 0 }, to: { opacity: 1 } },
+          }}
+          onClick={() => setModalImg(false)}
+        >
+          <Box
+            sx={{
+              position: "relative",
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+              bgcolor: "#000",
+            }}
+            onClick={(e) => e.stopPropagation()} // Prevent modal close when clicking on image
+          >
+            <IconButton
+              onClick={() => setModalImg(false)}
+              sx={{
+                position: "absolute",
+                top: 20,
+                right: 25,
+                color: "#fff",
+                bgcolor: "rgba(0,0,0,0.5)",
+                "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
+                zIndex: 5,
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+
+            <img
+              src={showImg}
+              alt="Post Image"
+              style={{
+                width: "80%",
+                height: "80%",
+                objectFit: "contain",
+                objectPosition: "center",
+                display: "block",
+              }}
+            />
           </Box>
-        </>
+        </Box>
       )}
     </AuthGuard>
   );

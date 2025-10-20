@@ -1,55 +1,137 @@
 "use client";
 export const dynamic = "force-dynamic";
-import React, { useEffect, useRef, useState } from "react";
-import AuthGuard from "../authGuard/page,";
-import {Grid,Card,CardHeader,CardMedia,CardContent,Avatar,Typography,Button,Box,TextField,List,ListItem,ListItemText,ListItemAvatar,Fade, useTheme} from "@mui/material";
-import CancelIcon from "@mui/icons-material/Cancel";
- import LoadingComment from "../LoadingComment/page";
+import React, { useEffect, useState, memo } from "react";
+import {Box,Typography,Avatar,IconButton,TextField,Button,List,ListItem,ListItemAvatar,ListItemText,Fade,CardMedia,useTheme,} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import SendIcon from "@mui/icons-material/Send";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { getComment } from "@/redux/Posts";
 import { useTranslation } from "react-i18next";
+import LoadingComment from "../LoadingComment/page";
+import AuthGuard from "../authGuard/page,";
 
+/* ---------------------- CommentsList ---------------------- */
+const CommentsList = memo(({ id }) => {
+  const dispatch = useDispatch();
+  const { comment, loadingComment } = useSelector((s) => s.postsReducer);
+  const theme = useTheme();
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    dispatch(getComment(id));
+  }, [id, dispatch]);
+
+  if (loadingComment)
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+        <LoadingComment />
+      </Box>
+    );
+
+  return (
+    <Box
+      sx={{
+        flexGrow: 1,
+        overflowY: "auto",
+        px: 2,
+        py: 1,
+        minHeight: 0,
+        "&::-webkit-scrollbar": { width: "6px" },
+        "&::-webkit-scrollbar-thumb": {
+          backgroundColor: "rgba(150,150,150,0.4)",
+          borderRadius: 3,
+        },
+      }}
+    >
+      <Typography
+        variant="subtitle2"
+        sx={{
+          my: 1,
+          fontWeight: 600,
+          color: theme.palette.mode === "dark" ? "#e0e0e0" : "#444",
+        }}
+      >
+        💬 {comment?.comments?.length ?? 0} {t("comments")}
+      </Typography>
+
+      <List sx={{ p: 0 }}>
+        {[...(comment?.comments ?? [])].reverse().map((c) => (
+          <Fade in key={c._id}>
+            <ListItem
+              sx={{
+                mb: 1,
+                borderRadius: 2,
+                bgcolor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.03)",
+              }}
+            >
+              <ListItemAvatar>
+                <Avatar src={c?.commentCreator?.photo} />
+              </ListItemAvatar>
+              <ListItemText
+                primary={
+                  <Typography fontWeight={600}>
+                    {c?.commentCreator?.name}
+                  </Typography>
+                }
+                secondary={
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: theme.palette.mode === "dark" ? "#aaa" : "#555",
+                    }}
+                  >
+                    {c?.content}
+                  </Typography>
+                }
+              />
+              <Typography
+                variant="caption"
+                sx={{ color: "#999", mt: "auto", ml: 1 }}
+              >
+                {c?.createdAt?.split("T")[0]}
+              </Typography>
+            </ListItem>
+          </Fade>
+        ))}
+      </List>
+    </Box>
+  );
+});
+
+/* ---------------------- Main Modal ---------------------- */
 export default function AllComment({ id, setModal }) {
   const [loadingSend, setLoadingSend] = useState(false);
-  const commentRef = useRef();
-    const { t } = useTranslation();
-  const { comment, loadingComment } = useSelector((store) => store.postsReducer);
+  const [commentValue, setCommentValue] = useState("");
+  const { t } = useTranslation();
+  const { comment, loadingComment } = useSelector((s) => s.postsReducer);
   const dispatch = useDispatch();
   const theme = useTheme();
-  // title
-  useEffect(() => {
-    document.title = "Comments";
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const value = commentRef.current.value;
-    if (!value.trim()) {
-      toast.error(t("Writeacommentbeforesending"));
-      return;
-    }
+    const value = commentValue.trim();
+    if (!value) return toast.error(t("Writeacommentbeforesending"));
     try {
       setLoadingSend(true);
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      if (!token) {
-        toast.error("Token not found");
-        setLoadingSend(false);
-        return;
-      }
-      const { data } = await axios.post(
+      const token = localStorage.getItem("token");
+      if (!token) return toast.error("Token not found");
+
+      await axios.post(
         "https://linked-posts.routemisr.com/comments",
         { content: value, post: id },
         { headers: { token } }
       );
+
       toast.success(t("Commentadded"));
+      setCommentValue("");
       dispatch(getComment(id));
-      commentRef.current.value = "";
-    } catch (err) {
-      toast.error(t('Failedtosendcomment'));
-      // console.error(err);
+    } catch {
+      toast.error(t("Failedtosendcomment"));
     } finally {
       setLoadingSend(false);
     }
@@ -57,157 +139,263 @@ export default function AllComment({ id, setModal }) {
 
   return (
     <AuthGuard>
-      <Box sx={{ height: "90vh", display: "flex", flexDirection: "column",p: { xs: 3, sm: 0, md: 0 },bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#f5f5f5"}}>
+      <Box
+        sx={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 2000,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backdropFilter: "blur(10px)",
+          backgroundColor: "rgba(0,0,0,0.6)",
+        }}
+      >
+        {/* Close button */}
+        <IconButton
+          onClick={() => setModal(false)}
+          sx={{
+            position: "absolute",
+            top: 20,
+            right: 30,
+            color: "#fff",
+            zIndex: 3,
+          }}
+        >
+          <CloseIcon fontSize="large" />
+        </IconButton>
 
-          {/* Scrollable Area */}
-        <Box sx={{ flexGrow: 1, overflowY: "auto", px: { xs: 1, sm: 2 } }}>
-          {loadingComment ? (
-            <LoadingComment />
-          ) : (
-            <Grid container justifyContent="center">
-              <Card
-                key={comment?.id}
-                sx={{width: "100%",maxWidth: 690,mx: "auto",mt: {md:2},borderRadius: 3,boxShadow: "0px 8px 24px rgba(0,0,0,0.1)",bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#fff",}}>
-                <CardHeader
-                  avatar={
-                    <Avatar sx={{ bgcolor:'#777' }}>
-                      <img
-                        src={comment?.user?.photo}
-                        style={{ width: "100%" }}
-                        alt=""
-                      />
-                    </Avatar>
-                  }
-                  action={
-                    <CancelIcon
-                      onClick={() => setModal(false)}
-                      sx={{ cursor: "pointer", color: "#777" }}
-                    />
-                  }
-                  title={
-                    <Typography sx={{ fontWeight: "bold", fontSize: 17 }}>
+        {/* Main Container */}
+        <Fade in>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              width: { xs: "95%", md: "85%", lg: "75%" },
+              height: { xs: "95%", md: "80%" },
+              borderRadius: 4,
+              overflow: "hidden",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
+              bgcolor:
+                theme.palette.mode === "dark"
+                  ? "rgba(25,25,25,0.95)"
+                  : "rgba(255,255,255,0.9)",
+              position: "relative",
+            }}
+          >
+            {/* LEFT IMAGE SECTION */}
+            <Box
+              sx={{
+                position: "relative",
+                flex: 1,
+                height: { xs: 300, md: "100%" },
+                bgcolor: "#000",
+              }}
+            >
+              <CardMedia
+                component="img"
+                image={
+                  comment?.image ||
+                  "https://via.placeholder.com/600x800?text=No+Image"
+                }
+                alt="Post"
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+
+              {/* overlay info (xs / sm only) */}
+              <Box
+                sx={{
+                  display: { xs: "flex", md: "none" },
+                  flexDirection: "column",
+                  justifyContent: "flex-end",
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  width: "100%",
+                  bgcolor: "rgba(0,0,0,0.65)",
+                  p: 2,
+                  gap: 1,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Avatar src={comment?.user?.photo} />
+                  <Box>
+                    <Typography sx={{ color: "#fff", fontWeight: 600 }}>
                       {comment?.user?.name}
                     </Typography>
-                  }
-                  subheader={comment?.createdAt?.split("T")?.[0] ?? ""}
-                />
-
-                <CardContent>
-                  <Typography variant="body1" sx={{color:theme.palette.mode === "dark" ? "#b4b4b4ff" : "#424242ff", fontSize: 15 }}>
-                    {comment?.body}
-                  </Typography>
-                </CardContent>
-
-                {comment?.image && (
-                  <CardMedia
-                    component="img"
-                    height="300"
-                    image={comment?.image}
-                    alt="post image"
-                    sx={{ borderRadius: "0 0 16px 16px" }}
-                  />
-                )}
-
-                {/* Comments Count */}
-                <Typography sx={{ fontWeight: "bold", px: 2, pt: 2 }}>
-                  💬 {comment?.comments?.length ?? 0} {t('comments')}
-                </Typography>
-
-                {/* Comments List */}
-                <List sx={{ width: "100%", px: 1, pb: 2 }}>
-                  {[...(comment?.comments ?? [])]
-                    .reverse()
-                    .map((ite) => (
-                      <Fade in timeout={500} key={ite._id}>
-                        <ListItem
-                          alignItems="flex-start"
-                          sx={{
-                             bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#f9f9f9",
- 
-                            mt: 1,
-                            borderRadius: 2,
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-                          }}
-                        >
-                          <ListItemAvatar>
-                            <Avatar
-                              alt={ite?.commentCreator?.name}
-                              src={ite?.commentCreator?.photo}
-                            />
-                          </ListItemAvatar>
-                          <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                            <ListItemText
-                              primary={
-                                <Typography sx={{ fontWeight: "bold" }}>
-                                  {ite?.commentCreator?.name}
-                                </Typography>
-                              }
-                              secondary={ite?.content}
-                            />
-                            <Box
-                              sx={{
-                                fontSize: 12,
-                                color: "#888",
-                                mt: 0.5,
-                                textAlign: "right",
-                              }}
-                            >
-                              {ite?.createdAt?.split("T")?.[0] || ""}
-                            </Box>
-                          </Box>
-                        </ListItem>
-                      </Fade>
-                    ))}
-                </List>
-              </Card>
-            </Grid>
-          )}
-        </Box>
-
-                  {/* Comment Input Bar */}
-                  {!loadingComment && (
-                    <Box
-                      component="form"
-                      onSubmit={handleSubmit}
-                      sx={{
-                        position: "sticky",
-                        bottom: 3,
-                        bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#f5f5f5",
-                        boxShadow: "0 -2px 8px rgba(0,0,0,0.1)",
-                        zIndex: 100,
-                        p: 1,
-                        margin: "auto",
-                        width: { xs: "93%", sm: "94%", md: "570px" },
-                        transform: { xs: "translateX(7px)", sm: "translateX(-7px)", md: "translateX(-8px)" },
-                        borderTopLeftRadius: 12,
-                        borderTopRightRadius: 12,
-                      }}
-                            >
-                    <Box sx={{ display: "flex", gap: 2 }}>
-                                  <TextField
-                            inputRef={commentRef}
-                            name="comment"
-                            placeholder={t("Writeyourcommenthere")}
-                            variant="outlined"
-                            fullWidth
-                            multiline
-                            maxRows={3}
-                            InputProps={{
-                              sx: {
-                                px: { xs: .5, sm: 2 },  py: { xs: 1.5, sm: 1.5 },},}}
-                            sx={{
-                                  bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#f5f5f5",borderRadius: 1,}}/>
-                      <Button type="submit" variant="contained">
-                        {loadingSend ? (
-                          <i className="fa-solid fa-spinner fa-spin"style={{ fontSize: "17px" }}/>
-                        ) : (
-                          <span>{t('send')}</span>
-                        )}
-                      </Button>
-                    </Box>
+                    <Typography sx={{ color: "#ccc", fontSize: 12 }}>
+                      {comment?.createdAt?.split("T")[0]}
+                    </Typography>
                   </Box>
+                </Box>
+                <Typography
+                  sx={{
+                    fontSize: 14,
+                    mt: 0.5,
+                    color: "#e0e0e0",
+                  }}
+                >
+                  {comment?.body}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* RIGHT COMMENTS SECTION */}
+            <Box
+              sx={{
+                flex: 1.1,
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
+                bgcolor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(30,30,30,0.95)"
+                    : "rgba(255,255,255,0.98)",
+                color: theme.palette.mode === "dark" ? "#f5f5f5" : "#222",
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2,
+                  borderBottom: "1px solid rgba(0,0,0,0.1)",
+                  display: { xs: "none", md: "block" },
+                  flexShrink: 0,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Avatar src={comment?.user?.photo} />
+                  <Box>
+                    <Typography fontWeight={600}>
+                      {comment?.user?.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {comment?.createdAt?.split("T")[0]}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Typography
+                  sx={{
+                    mt: 1.5,
+                    fontSize: 15,
+                    color: theme.palette.mode === "dark" ? "#ccc" : "#444",
+                  }}
+                >
+                  {comment?.body}
+                </Typography>
+              </Box>
+
+              <CommentsList id={id} />
+
+              {/* Comment input for md+ */}
+              {loadingComment ? (
+                ""
+              ) : (
+                <Box
+                  component="form"
+                  onSubmit={handleSubmit}
+                  sx={{
+                    display: { xs: "none", md: "flex" },
+                    gap: 1,
+                    p: 2,
+                    borderTop: "1px solid rgba(0,0,0,0.1)",
+                    bgcolor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.05)"
+                        : "rgba(245,245,245,0.9)",
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    multiline
+                    maxRows={3}
+                    value={commentValue}
+                    onChange={(e) => setCommentValue(e.target.value)}
+                    placeholder={t("Writeyourcommenthere")}
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      borderRadius: 3,
+                      bgcolor:
+                        theme.palette.mode === "dark"
+                          ? "rgba(255,255,255,0.08)"
+                          : "#fff",
+                      "& .MuiOutlinedInput-root fieldset": { border: "none" },
+                    }}
+                  />
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    endIcon={
+                      loadingSend ? (
+                        <i className="fa-solid fa-spinner fa-spin" />
+                      ) : (
+                        <SendIcon />
+                      )
+                    }
+                    sx={{
+                      borderRadius: 3,
+                      px: 3,
+                      fontWeight: 600,
+                      textTransform: "none",
+                    }}
+                  >
+                    {t("send")}
+                  </Button>
+                </Box>
+              )}
+            </Box>
+
+            {/* Fixed input for small screens */}
+            <Box
+              component="form"
+              onSubmit={handleSubmit}
+              sx={{
+                display: { xs: "flex", md: "none" },
+                alignItems: "center",
+                gap: 1,
+                position: "fixed",
+                bottom: 15,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: "90%",
+                bgcolor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(40,40,40,0.9)"
+                    : "rgba(255,255,255,0.95)",
+                borderRadius: 3,
+                p: 1,
+                boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
+                zIndex: 3000,
+              }}
+            >
+              <TextField
+                fullWidth
+                size="small"
+                value={commentValue}
+                onChange={(e) => setCommentValue(e.target.value)}
+                placeholder={t("Writeyourcommenthere")}
+                variant="outlined"
+                sx={{
+                  bgcolor: theme.palette.mode === "dark" ? "#222" : "#fff",
+                  borderRadius: 2,
+                  "& .MuiOutlinedInput-root fieldset": { border: "none" },
+                }}
+              />
+              <IconButton type="submit" color="primary" disabled={loadingSend}>
+                {loadingSend ? (
+                  <i className="fa-solid fa-spinner fa-spin" />
+                ) : (
+                  <SendIcon />
                 )}
+              </IconButton>
+            </Box>
           </Box>
-        </AuthGuard>
+        </Fade>
+      </Box>
+    </AuthGuard>
   );
 }
