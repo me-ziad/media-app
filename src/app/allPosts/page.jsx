@@ -20,6 +20,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos"; // Slider
 import Slider from "react-slick"; // Slider/carousel component
 import "slick-carousel/slick/slick.css"; // Slider CSS
 import "slick-carousel/slick/slick-theme.css"; // Slider theme CSS
+import { useTranslation } from "react-i18next";
 
 // Custom Next Arrow for react-slick to avoid DOM prop warnings
 const CustomNextArrow = (props) => {
@@ -110,6 +111,7 @@ export default function AllPosts() {
   const theme = useTheme(); // Get Material UI theme
   const router = useRouter(); // Next.js router
   const dispatch = useDispatch(); // Redux dispatch
+  const { t } = useTranslation(); // Translation function
 
   // State variables
   const [comId, setComId] = useState(null); // Current comment ID
@@ -199,7 +201,7 @@ export default function AllPosts() {
                 letterSpacing: 0.5,
               }}
             >
-              Stories
+              {t('Stories')}
             </Typography>
 
             {/* Slider component */}
@@ -273,7 +275,7 @@ export default function AllPosts() {
                     <Typography
                       sx={{ fontWeight: "bold", fontSize: "0.9rem", ml: 1 }}
                     >
-                      Add Story
+                      {t('AddStory')}
                     </Typography>
                   </Box>
                 </Box>
@@ -388,7 +390,7 @@ export default function AllPosts() {
               <Card
                 key={item._id}
                 sx={{
-                  width: { xs: "90%", sm: 500, md: 700 },
+                  width: { xs: "90%", sm: 500, md: 800 },
                   my: 2,
                   boxShadow: 4,
                   borderRadius: 3,

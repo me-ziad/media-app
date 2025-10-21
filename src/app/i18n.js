@@ -80,6 +80,8 @@ const resources = {
       JoinOurCommunity:'Join our community',
       DiscoverAndConnectWithTheWorld:'Discover and connect with the world',
       addposts:'add posts',
+      AddStory:'Add Story',
+      Stories:'Stories',
 
 
     }
@@ -87,6 +89,8 @@ const resources = {
   ar: {
     translation: {
       Posts: 'المنشورات',
+      Stories:'قصص',
+      AddStory:'أضف قصة',
       addposts:'أضافه منشور',
       JoinOurCommunity:'انضم إلى مجتمعنا',
       DiscoverAndConnectWithTheWorld:'اكتشف وتواصل مع العالم',
