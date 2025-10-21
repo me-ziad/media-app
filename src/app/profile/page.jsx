@@ -192,7 +192,8 @@ export default function Profile() {
       {/* User Posts Section */}
       <Grid container justifyContent="center" spacing={2} sx={{ mt: 6 }}>
         {/* If user has no posts */}
-        {userPost?.posts?.length === 0 ? (
+        {userPost?.posts?.length === 0 ? <>
+        {load ? '':
           <Box
             sx={{
               mt: 1,
@@ -219,7 +220,8 @@ export default function Profile() {
               {t("Createyourfirstpost")}
             </Button>
           </Box>
-        ) : (
+        }  
+        </> : (
           // Map over posts and display each post
           [...(userPost?.posts ?? [])].reverse().map((item, i) => (
             <Zoom in key={item._id} style={{ transitionDelay: `${i * 100}ms` }}>

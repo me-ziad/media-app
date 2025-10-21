@@ -191,7 +191,7 @@ export default function Login() {
           alignItems: "center",
           justifyContent: "center",
           py: 8,
-          px: { xs: 3, sm: 6, md: 8 },
+          px: { xs: 0, sm: 6, md: 8 },
           position: "relative",
           zIndex: 1,
         }}
@@ -207,7 +207,7 @@ export default function Login() {
           <Paper
             elevation={20}
             sx={{
-              p: 5,
+              p: {xs:2, md:5},
               borderRadius: 5,
               backdropFilter: "blur(25px) saturate(180%)",
               background:

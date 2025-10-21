@@ -120,6 +120,7 @@ export default function Navbar() {
                   color: theme.palette.primary.main,
                   letterSpacing: 1,
                   cursor: "pointer",
+                  display:{xs:'none',md:'block'}
                 }}
               >
                 Link<span style={{ color: theme.palette.text.primary }}>ed</span>
@@ -277,8 +278,7 @@ export default function Navbar() {
                   }}
                 >
                   <MenuItem disableRipple>
-                    <Typography variant="body2" fontWeight="bold" sx={{ opacity: 0.8, mb: 1 }}>{t("Theme")}</Typography>
-                    <ThemeSwitcher />
+                     <ThemeSwitcher />
                   </MenuItem>
 
                   <Divider />

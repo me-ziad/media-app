@@ -190,7 +190,7 @@ export default function Register() {
           alignItems: "center",
           justifyContent: "center",
           py: 8,
-          px: { xs: 3, sm: 6, md: 8 },
+          px: { xs: 1, sm: 6, md: 8 },
           position: "relative",
           zIndex: 1,
         }}
@@ -206,7 +206,7 @@ export default function Register() {
           <Paper
             elevation={20}
             sx={{
-              p: 5,
+            p: {xs:2, md:5},
               borderRadius: 5,
               backdropFilter: "blur(25px) saturate(180%)",
               background:
@@ -276,6 +276,7 @@ export default function Register() {
                     color: theme.palette.mode === "dark" ? "#aaa" : "#555",
                     "&.Mui-focused": { color: "#fff" },
                   },
+                  
                 }}
               />
 
@@ -306,7 +307,7 @@ export default function Register() {
               />
 
               {/* Password and confirm password fields */}
-              <Box sx={{ display: "flex", gap: 2 }}>
+              <Box sx={{ display: "flex", flexDirection:{xs:"column",md:"row"}, gap: 2 }}>
                 <TextField
                   label={t("Password")}
                   name="password"
