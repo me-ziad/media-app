@@ -1,5 +1,5 @@
-"use client";
-export const dynamic = "force-dynamic";
+"use client"; // Mark this component as client-side
+export const dynamic = "force-dynamic"; // Force dynamic rendering
 import React, { useEffect, useState, memo } from "react";
 import {Box,Typography,Avatar,IconButton,TextField,Button,List,ListItem,ListItemAvatar,ListItemText,Fade,CardMedia,useTheme,} from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
@@ -13,12 +13,14 @@ import LoadingComment from "../LoadingComment/page";
 import AuthGuard from "../authGuard/page,";
 
 /* ---------------------- CommentsList ---------------------- */
+// Memoized component to display list of comments
 const CommentsList = memo(({ id }) => {
   const dispatch = useDispatch();
   const { comment, loadingComment } = useSelector((s) => s.postsReducer);
   const theme = useTheme();
   const { t } = useTranslation();
 
+  // Fetch comments when component mounts or id changes
   useEffect(() => {
     dispatch(getComment(id));
   }, [id, dispatch]);
@@ -26,7 +28,7 @@ const CommentsList = memo(({ id }) => {
   if (loadingComment)
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-        <LoadingComment />
+        <LoadingComment /> {/* Loading spinner */}
       </Box>
     );
 
@@ -45,6 +47,7 @@ const CommentsList = memo(({ id }) => {
         },
       }}
     >
+      {/* Comments count */}
       <Typography
         variant="subtitle2"
         sx={{
@@ -53,7 +56,7 @@ const CommentsList = memo(({ id }) => {
           color: theme.palette.mode === "dark" ? "#e0e0e0" : "#444",
         }}
       >
-        💬 {comment?.comments?.length ?? 0} {t("comments")}
+         {comment?.comments?.length ?? 0} {t("comments")}
       </Typography>
 
       <List sx={{ p: 0 }}>
@@ -69,9 +72,12 @@ const CommentsList = memo(({ id }) => {
                     : "rgba(0,0,0,0.03)",
               }}
             >
+              {/* Comment creator avatar */}
               <ListItemAvatar>
                 <Avatar src={c?.commentCreator?.photo} />
               </ListItemAvatar>
+
+              {/* Comment text */}
               <ListItemText
                 primary={
                   <Typography fontWeight={600}>
@@ -89,6 +95,8 @@ const CommentsList = memo(({ id }) => {
                   </Typography>
                 }
               />
+
+              {/* Comment date */}
               <Typography
                 variant="caption"
                 sx={{ color: "#999", mt: "auto", ml: 1 }}
@@ -112,6 +120,7 @@ export default function AllComment({ id, setModal }) {
   const dispatch = useDispatch();
   const theme = useTheme();
 
+  // Handle comment submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     const value = commentValue.trim();
@@ -139,6 +148,7 @@ export default function AllComment({ id, setModal }) {
 
   return (
     <AuthGuard>
+      {/* Modal backdrop */}
       <Box
         sx={{
           position: "fixed",
@@ -165,7 +175,7 @@ export default function AllComment({ id, setModal }) {
           <CloseIcon fontSize="large" />
         </IconButton>
 
-        {/* Main Container */}
+        {/* Main modal container */}
         <Fade in>
           <Box
             sx={{
@@ -192,21 +202,24 @@ export default function AllComment({ id, setModal }) {
                 bgcolor: "#000",
               }}
             >
+              {/* Show placeholder image if no image */}
               <CardMedia
                 component="img"
                 image={
-                  comment?.image ||
-                  "https://via.placeholder.com/600x800?text=No+Image"
+                  comment?.image
+                    ? comment.image
+                    : "https://via.placeholder.com/600x800?text=No+Image+Available"
                 }
-                alt="Post"
+                alt={comment?.image ? "Post" : "No Image Available"}
                 sx={{
                   width: "100%",
                   height: "100%",
                   objectFit: "cover",
+                  objectPosition: "center",
                 }}
               />
 
-              {/* overlay info (xs / sm only) */}
+              {/* Overlay info for small screens */}
               <Box
                 sx={{
                   display: { xs: "flex", md: "none" },
@@ -232,13 +245,7 @@ export default function AllComment({ id, setModal }) {
                     </Typography>
                   </Box>
                 </Box>
-                <Typography
-                  sx={{
-                    fontSize: 14,
-                    mt: 0.5,
-                    color: "#e0e0e0",
-                  }}
-                >
+                <Typography sx={{ fontSize: 14, mt: 0.5, color: "#e0e0e0" }}>
                   {comment?.body}
                 </Typography>
               </Box>
@@ -258,6 +265,7 @@ export default function AllComment({ id, setModal }) {
                 color: theme.palette.mode === "dark" ? "#f5f5f5" : "#222",
               }}
             >
+              {/* Post info for md+ */}
               <Box
                 sx={{
                   p: 2,
@@ -288,12 +296,11 @@ export default function AllComment({ id, setModal }) {
                 </Typography>
               </Box>
 
+              {/* Comments list */}
               <CommentsList id={id} />
 
               {/* Comment input for md+ */}
-              {loadingComment ? (
-                ""
-              ) : (
+              {!loadingComment && (
                 <Box
                   component="form"
                   onSubmit={handleSubmit}
@@ -349,7 +356,7 @@ export default function AllComment({ id, setModal }) {
               )}
             </Box>
 
-            {/* Fixed input for small screens */}
+            {/* Fixed input for xs/sm */}
             <Box
               component="form"
               onSubmit={handleSubmit}

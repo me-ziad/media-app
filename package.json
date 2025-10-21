@@ -34,8 +34,10 @@
     "react-hot-toast": "^2.5.2",
     "react-i18next": "^15.6.1",
     "react-redux": "^9.2.0",
+    "react-slick": "^0.31.0",
     "react-spinner": "^0.2.7",
     "redux": "^5.0.1",
+    "slick-carousel": "^1.8.1",
     "yup": "^1.6.1"
   }
 }

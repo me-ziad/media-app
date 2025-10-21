@@ -1,78 +1,138 @@
-"use client";
-export const dynamic = "force-dynamic";
+"use client"; // Mark this component as a client-side component
+export const dynamic = "force-dynamic"; // Force Next.js to treat this page as dynamic
 
 import React, { useEffect, useState } from "react";
-import AuthGuard from "../authGuard/page,"; // Protects route for authenticated users
-import { useDispatch, useSelector } from "react-redux";
-import { getComment, getPosts } from "@/redux/Posts";
-import {
-  Grid,
-  Card,
-  CardHeader,
-  CardMedia,
-  CardContent,
-  CardActions,
-  Avatar,
-  IconButton,
-  Typography,
-  Box,
-  useTheme,
-} from "@mui/material";
-import InsertCommentIcon from "@mui/icons-material/InsertComment";
-import Loading from "../loadingPosts/page"; // Component for loading spinner
-import AllComment from "../allComment/page"; // Component to show all comments
-import CloseIcon from "@mui/icons-material/Close";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import SpeedDial from "@mui/material/SpeedDial";
-import SpeedDialIcon from "@mui/material/SpeedDialIcon";
-import EditIcon from "@mui/icons-material/Edit";
-import { useRouter } from "next/navigation";
-import { useTranslation } from "react-i18next";
-import Head from "next/head";
+import AuthGuard from "../authGuard/page,"; // Protect the page with authentication
+import { useDispatch, useSelector } from "react-redux"; // Redux hooks
+import { getComment, getPosts } from "@/redux/Posts"; // Redux actions
+import {Grid,Card,CardHeader,CardMedia,CardContent,CardActions,Avatar,IconButton,Typography,Box,useTheme,} from "@mui/material"; // Material UI components
+import InsertCommentIcon from "@mui/icons-material/InsertComment"; // Comment icon
+import Loading from "../loadingPosts/page"; // Loading spinner component
+import AllComment from "../allComment/page"; // Component to display all comments
+import CloseIcon from "@mui/icons-material/Close"; // Close icon for modals
+import SpeedDial from "@mui/material/SpeedDial"; // Floating action button
+import SpeedDialIcon from "@mui/material/SpeedDialIcon"; // SpeedDial icon
+import EditIcon from "@mui/icons-material/Edit"; // Edit icon
+import { useRouter } from "next/navigation"; // Next.js router
+import Head from "next/head"; // Head component to manage meta tags
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew"; // Slider prev arrow icon
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos"; // Slider next arrow icon
+import Slider from "react-slick"; // Slider/carousel component
+import "slick-carousel/slick/slick.css"; // Slider CSS
+import "slick-carousel/slick/slick-theme.css"; // Slider theme CSS
 
+// Custom Next Arrow for react-slick to avoid DOM prop warnings
+const CustomNextArrow = (props) => {
+  const { className, style, onClick } = props;
+  return (
+    <Box
+      className={className}
+      sx={{
+        position: "absolute",
+        top: "50%",
+        right: { md: "-40px" },
+        transform: "translateY(-50%)",
+        zIndex: 3,
+        bgcolor: "rgba(255,255,255,0.95)",
+        width: 45,
+        height: 45,
+        borderRadius: "50%",
+        boxShadow: "0 3px 10px rgba(0,0,0,0.25)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        transition: "all 0.25s ease",
+        "&:hover": {
+          bgcolor: "#1976d2",
+          "& svg": { color: "#fff" },
+        },
+      }}
+      onClick={onClick} // Click handler
+    >
+      <ArrowForwardIosIcon
+        sx={{
+          fontSize: 22,
+          position: "relative",
+          right: "10px",
+          top: "0px",
+          color: "#1976d2",
+        }}
+      />
+    </Box>
+  );
+};
+
+// Custom Previous Arrow for react-slick
+const CustomPrevArrow = (props) => {
+  const { className, style, onClick } = props;
+  return (
+    <Box
+      className={className}
+      sx={{
+        position: "absolute",
+        top: "50%",
+        left: { md: "-40px" },
+        transform: "translateY(-50%)",
+        zIndex: 3,
+        bgcolor: "rgba(255, 255, 255, 1)",
+        width: 45,
+        height: 45,
+        borderRadius: "50%",
+        boxShadow: "0 3px 10px rgba(0,0,0,0.25)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        transition: "all 0.25s ease",
+        "&:hover": {
+          bgcolor: "#0281ffff",
+          "& svg": { color: "#fff" },
+        },
+      }}
+      onClick={onClick} // Click handler
+    >
+      <ArrowBackIosNewIcon
+        sx={{
+          fontSize: 22,
+          position: "relative",
+          right: "10px",
+          top: "0px",
+          color: "#1976d2",
+        }}
+      />
+    </Box>
+  );
+};
+
+// Main component for displaying all posts
 export default function AllPosts() {
-  const theme = useTheme();
-  const router = useRouter();
-  const { t } = useTranslation();
-  const dispatch = useDispatch();
+  const theme = useTheme(); // Get Material UI theme
+  const router = useRouter(); // Next.js router
+  const dispatch = useDispatch(); // Redux dispatch
 
-  // Local states
-  const [comId, setComId] = useState(null); // Selected post ID for comments
+  // State variables
+  const [comId, setComId] = useState(null); // Current comment ID
   const [modal, setModal] = useState(false); // Comment modal visibility
   const [modalImg, setModalImg] = useState(false); // Image modal visibility
-  const [showImg, setShowImg] = useState(false); // Image to display in modal
-  const [page, setPage] = useState(1); // Current pagination page
+  const [showImg, setShowImg] = useState(false); // Image to display
+  const [page, setPage] = useState(1); // Pagination page
 
-  // Redux store
-  const { posts, loading } = useSelector((store) => store.postsReducer);
-  const POSTS_PER_PAGE = 50; // Number of posts per page
+  const { posts, loading } = useSelector((store) => store.postsReducer); // Get posts from Redux store
 
-  const totalPages = posts?.total ? Math.ceil(posts.total / POSTS_PER_PAGE) : 5;
-
-  // Fetch posts whenever page changes
+  // Fetch posts when component mounts or page changes
   useEffect(() => {
-    const apiPage = totalPages - page + 1; // Adjust for backend pagination
-    dispatch(getPosts({ limit: POSTS_PER_PAGE, page: apiPage }));
-  }, [page, totalPages]);
+    dispatch(getPosts({ page, limit: 40 }));
+  }, [dispatch, page]);
 
-  // Sort posts by creation date (newest first)
-  const sortedPosts = posts?.posts
-    ?.slice()
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-  // Set document title
+  // Set page title
   useEffect(() => {
     document.title = "All posts";
   }, []);
 
-  // Pagination handlers
-  const handleNextPage = () => setPage((prev) => Math.min(prev + 1, totalPages));
-  const handlePrevPage = () => setPage((prev) => Math.max(prev - 1, 1));
-
-  // Open comment modal for specific post
+  // Open comment modal and fetch comments
   const handelModal = (id) => {
-    dispatch(getComment(id)); // Fetch comments
+    dispatch(getComment(id));
     setModal(true);
     setComId(id);
   };
@@ -83,29 +143,236 @@ export default function AllPosts() {
     setModalImg(true);
   };
 
+  // Slider settings
+  const sliderSettings = {
+    dots: false,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 6,
+    slidesToScroll: 3,
+    arrows: false,
+    responsive: [
+      { breakpoint: 1200, settings: { slidesToShow: 5 } },
+      { breakpoint: 900, settings: { slidesToShow: 4 } },
+      { breakpoint: 600, settings: { slidesToShow: 3 } },
+    ],
+  };
+
   return (
-    <AuthGuard>
-      {/* Page meta */}
+    <AuthGuard> {/* Protect content with authentication */}
       <Head>
-        <meta name="description" content="All posts" />
+        <meta name="description" content="All posts" /> {/* SEO meta tag */}
       </Head>
 
-      {/* Floating button to add a new post */}
+      {/* Floating Add Post Button */}
       <Box sx={{ position: "fixed", bottom: 0, right: 0 }}>
         <SpeedDial
           ariaLabel="Add Post"
           sx={{ position: "fixed", bottom: 16, right: 16, zIndex: 9999 }}
           icon={<SpeedDialIcon openIcon={<EditIcon />} />}
-          onClick={() => router.push("/addPost")}
+          onClick={() => router.push("/addPost")} // Navigate to add post page
         />
       </Box>
 
-      {/* Loading spinner */}
+      {/* Display loading spinner if posts are loading */}
       {loading ? (
         <Loading />
       ) : (
         <>
-          {/* Posts Grid */}
+          {/* Stories slider section */}
+          <Box
+            sx={{
+              width: "90%",
+              m: "auto",
+              mt: 12,
+              px: { xs: 1, sm: 4 },
+              mb: 6,
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 2,
+                fontWeight: "bold",
+                textAlign: "center",
+                color: theme.palette.primary.main,
+                letterSpacing: 0.5,
+              }}
+            >
+              Stories
+            </Typography>
+
+            {/* Slider component */}
+            <Slider
+              dots={false}
+              infinite={false}
+              speed={600}
+              slidesToShow={5}
+              slidesToScroll={3}
+              arrows={true}
+              nextArrow={<CustomNextArrow />} // Custom next arrow
+              prevArrow={<CustomPrevArrow />} // Custom previous arrow
+              responsive={[
+                { breakpoint: 1200, settings: { slidesToShow: 4 } },
+                { breakpoint: 900, settings: { slidesToShow: 3 } },
+                { breakpoint: 600, settings: { slidesToShow: 2 } },
+              ]}
+            >
+              {/* Add Story Box */}
+              {loading ? null : (
+                <Box sx={{ px: 2 }}>
+                  <Box
+                    sx={{
+                      position: "relative",
+                      borderRadius: "18px",
+                      overflow: "hidden",
+                      cursor: "pointer",
+                      height: 230,
+                      minWidth: 140,
+                      background: "linear-gradient(135deg, #1976d2, #42a5f5)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#fff",
+                      boxShadow: "0px 4px 12px rgba(0,0,0,0.2)",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        transform: "translateY(-4px)",
+                        boxShadow: "0px 8px 15px rgba(0,0,0,0.25)",
+                      },
+                    }}
+                    onClick={() => router.push("/addPost")}
+                  >
+                    {/* Plus icon */}
+                    <Box
+                      sx={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: "50%",
+                        mt: 1,
+                        ml: 1,
+                        bgcolor: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          color: "#1976d2",
+                          fontSize: 35,
+                          fontWeight: "bold",
+                          lineHeight: 0.8,
+                        }}
+                      >
+                        +
+                      </Typography>
+                    </Box>
+                    <Typography
+                      sx={{ fontWeight: "bold", fontSize: "0.9rem", ml: 1 }}
+                    >
+                      Add Story
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+
+              {/* Map through first 10 posts to show as stories */}
+              {posts?.posts?.slice(0, 10)?.map((item) => (
+                <Box key={item._id} sx={{ px: 2 }}>
+                  <Box
+                    sx={{
+                      position: "relative",
+                      borderRadius: "18px",
+                      overflow: "hidden",
+                      cursor: "pointer",
+                      height: 230,
+                      minWidth: 140,
+                      backgroundImage: item?.image
+                        ? `url(${item.image})`
+                        : "linear-gradient(135deg, #1976d2, #42a5f5)",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      boxShadow: "0px 4px 10px rgba(0,0,0,0.15)",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        transform: "translateY(-4px)",
+                        boxShadow: "0px 8px 15px rgba(0,0,0,0.25)",
+                      },
+                    }}
+                    onClick={() => handelModal(item._id)} // Open comment modal
+                  >
+                    {/* User avatar */}
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 12,
+                        left: 12,
+                        borderRadius: "50%",
+                        border: "3px solid #1976d2",
+                        width: 45,
+                        height: 45,
+                        overflow: "hidden",
+                        bgcolor: "#fff",
+                      }}
+                    >
+                      <img
+                        src={item?.user?.photo}
+                        alt={item?.user?.name}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    </Box>
+
+                    {/* Post text */}
+                    {item?.body && (
+                      <Typography
+                        sx={{
+                          position: "absolute",
+                          top: 12,
+                          right: 10,
+                          left: 65,
+                          fontSize: "0.8rem",
+                          fontWeight: "bold",
+                          color: "#fff",
+                          textShadow: "0 0 5px rgba(0,0,0,0.7)",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {item?.body}
+                      </Typography>
+                    )}
+
+                    {/* User name */}
+                    <Typography
+                      sx={{
+                        position: "absolute",
+                        bottom: 10,
+                        left: 12,
+                        right: 12,
+                        fontWeight: "bold",
+                        color: "#fff",
+                        textShadow: "0 0 5px rgba(0,0,0,0.7)",
+                        fontSize: "0.9rem",
+                        textAlign: "left",
+                      }}
+                    >
+                      {item?.user?.name}
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Slider>
+          </Box>
+
+          {/* Grid for all posts */}
           <Grid
             container
             spacing={2}
@@ -114,12 +381,12 @@ export default function AllPosts() {
               justifyContent: "center",
               flexDirection: "column",
               alignItems: "center",
-              mt: 12,
             }}
           >
-            {sortedPosts?.map((item) => (
+            {/* Map through all posts */}
+            {posts?.posts?.map((item) => (
               <Card
-                key={item.id}
+                key={item._id}
                 sx={{
                   width: { xs: "90%", sm: 500, md: 700 },
                   my: 2,
@@ -129,7 +396,7 @@ export default function AllPosts() {
                     theme.palette.mode === "dark" ? "#1e1e1e" : "#fafafa",
                 }}
               >
-                {/* Post header with user info */}
+                {/* Card header with avatar and username */}
                 <CardHeader
                   avatar={
                     <Avatar
@@ -138,7 +405,9 @@ export default function AllPosts() {
                       sx={{ width: 45, height: 45 }}
                     />
                   }
-                  title={<Typography fontWeight="bold">{item?.user?.name}</Typography>}
+                  title={
+                    <Typography fontWeight="bold">{item?.user?.name}</Typography>
+                  }
                   subheader={item?.createdAt?.split("T")?.[0] ?? ""}
                 />
 
@@ -152,7 +421,7 @@ export default function AllPosts() {
                 {/* Post image */}
                 {item?.image && (
                   <CardMedia
-                    onClick={() => handelImage(item?.image)}
+                    onClick={() => handelImage(item?.image)} // Open image modal
                     component="img"
                     height="300"
                     image={item?.image}
@@ -161,12 +430,20 @@ export default function AllPosts() {
                   />
                 )}
 
-                {/* Post actions */}
+                {/* Comment button */}
                 <CardActions
-                  sx={{ display: "flex", justifyContent: "center", alignItems: "center", my: 1 }}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    my: 1,
+                  }}
                   disableSpacing
                 >
-                  <IconButton onClick={() => handelModal(item.id)} aria-label="comment">
+                  <IconButton
+                    onClick={() => handelModal(item._id)}
+                    aria-label="comment"
+                  >
                     <InsertCommentIcon />
                   </IconButton>
                 </CardActions>
@@ -174,7 +451,7 @@ export default function AllPosts() {
             ))}
           </Grid>
 
-          {/* Pagination controls */}
+          {/* Pagination component */}
           <Box
             sx={{
               position: "fixed",
@@ -182,42 +459,30 @@ export default function AllPosts() {
               left: "50%",
               transform: "translateX(-50%)",
               display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
               gap: 2,
-              zIndex: 999,
               bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#fff",
               boxShadow: "0px 0px 10px rgba(0,0,0,0.1)",
               borderRadius: "30px",
               px: 3,
               py: 1,
-              alignItems: "center",
+              zIndex: 1000,
             }}
           >
             <IconButton
-              onClick={handlePrevPage}
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))} // Previous page
               disabled={page === 1}
-              sx={{ bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#f5f5f5", "&:hover": { bgcolor: "#ddd" } }}
             >
               <ArrowBackIosNewIcon />
             </IconButton>
 
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: "bold",
-                fontSize: { xs: 12, md: 14 },
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 1,
-              }}
-            >
-              <span>{t("page")}</span>
-              <span> {page}</span>
-            </Typography>
+            <Typography fontWeight="bold">{page}</Typography> {/* Current page */}
 
             <IconButton
-              onClick={handleNextPage}
-              sx={{ bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#f5f5f5", "&:hover": { bgcolor: "#ddd" } }}
+              onClick={() =>
+                setPage((prev) => Math.min(prev + 1, posts?.totalPages || prev)) // Next page
+              }
             >
               <ArrowForwardIosIcon />
             </IconButton>
@@ -225,17 +490,21 @@ export default function AllPosts() {
         </>
       )}
 
-      {/* Comment modal */}
+      {/* Comment Modal */}
       {modal && (
         <>
-          <div className="backdrop" onClick={() => setModal(false)} />
-          <Box sx={{ bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#f5f5f5" }}>
-            <AllComment id={comId} setModal={setModal} />
+          <div className="backdrop" onClick={() => setModal(false)} /> {/* Overlay */}
+          <Box
+            sx={{
+              bgcolor: theme.palette.mode === "dark" ? "#1e1e1e" : "#f5f5f5",
+            }}
+          >
+            <AllComment id={comId} setModal={setModal} /> {/* Comments component */}
           </Box>
         </>
       )}
 
-      {/* Image modal */}
+      {/* Image Modal */}
       {modalImg && (
         <Box
           sx={{
@@ -247,10 +516,8 @@ export default function AllPosts() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            animation: "fadeIn 0.3s ease",
-            "@keyframes fadeIn": { from: { opacity: 0 }, to: { opacity: 1 } },
           }}
-          onClick={() => setModalImg(false)}
+          onClick={() => setModalImg(false)} // Close modal on backdrop click
         >
           <Box
             sx={{
@@ -263,10 +530,10 @@ export default function AllPosts() {
               overflow: "hidden",
               bgcolor: "#000",
             }}
-            onClick={(e) => e.stopPropagation()} // Prevent modal close when clicking on image
+            onClick={(e) => e.stopPropagation()} // Prevent closing modal when clicking on image
           >
             <IconButton
-              onClick={() => setModalImg(false)}
+              onClick={() => setModalImg(false)} // Close button
               sx={{
                 position: "absolute",
                 top: 20,
