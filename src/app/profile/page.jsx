@@ -22,6 +22,7 @@ import AllComment from "../allComment/page";
 import AuthGuard from "../authGuard/page,";
 import Loading from "../loadingPosts/page";
 import { useTranslation } from "react-i18next";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 
 export default function Profile() {
   // Get user profile and refresh function from context
@@ -40,7 +41,7 @@ export default function Profile() {
   const [comId, setComId] = useState(null);
   const [modalImg, setModalImg] = useState(false);
   const [showImg, setShowImg] = useState(false);
-
+  const [likedPosts, setLikedPosts] = useState([]);
   // Get auth token from redux
   const { token } = useSelector((state) => state.authReducer);
   const dispatch = useDispatch();
@@ -51,6 +52,26 @@ export default function Profile() {
   useEffect(() => {
     document.title = "Profile";
   }, []);
+  
+     // Load data from localStorage as soon as the component starts
+      useEffect(() => {
+        const savedLikes = JSON.parse(localStorage.getItem("likedPosts")) || [];
+        setLikedPosts(savedLikes);
+      }, []);
+  
+      // Update localStorage on change
+      useEffect(() => {
+        localStorage.setItem("likedPosts", JSON.stringify(likedPosts));
+      }, [likedPosts]);
+  
+      // Function to toggle the like state
+      const toggleLike = (postId) => {
+        setLikedPosts((prev) =>
+          prev.includes(postId)
+            ? prev.filter((id) => id !== postId)
+            : [...prev, postId]
+        );
+      };
 
   // Decode token and fetch user posts/profile
   useEffect(() => {
@@ -119,7 +140,7 @@ export default function Profile() {
           {/* Profile Card */}
           <Card
             sx={{
-              width: { xs: "100%", md: 900 },
+              width: { xs: "100%", md: 1200 },
               borderRadius: 4,
               overflow: "hidden",
               backdropFilter: "blur(12px)",
@@ -267,11 +288,24 @@ export default function Profile() {
                 </CardContent>
 
                 <Divider sx={{ opacity: 0.1 }} />
-
+                  
                 {/* Comments Button */}
                 <CardActions sx={{ justifyContent: "center" }}>
+                    {/* Like button */}
+                <IconButton onClick={() => toggleLike(item._id)} aria-label="like">
+                  <FavoriteIcon
+                    sx={{
+                      fontSize:36,
+                      color: likedPosts.includes(item._id) ? "#1976d2" : "#fff",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        transform: "scale(1.2)",
+                      },
+                    }}
+                  />
+                </IconButton>
                   <IconButton onClick={() => handleModal(item.id)}>
-                    <InsertCommentIcon /> {/* Open comments modal */}
+                    <InsertCommentIcon sx={{ fontSize:31}}/> {/* Open comments modal */}
                   </IconButton>
                 </CardActions>
               </Card>

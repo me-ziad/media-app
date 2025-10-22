@@ -1,6 +1,5 @@
 "use client"; // Mark this component as a client-side component
 export const dynamic = "force-dynamic"; // Force Next.js to treat this page as dynamic
-
 import React, { useEffect, useState } from "react";
 import AuthGuard from "../authGuard/page,"; // Protect the page with authentication
 import { useDispatch, useSelector } from "react-redux"; // Redux hooks
@@ -21,6 +20,7 @@ import Slider from "react-slick"; // Slider/carousel component
 import "slick-carousel/slick/slick.css"; // Slider CSS
 import "slick-carousel/slick/slick-theme.css"; // Slider theme CSS
 import { useTranslation } from "react-i18next";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 
 // Custom Next Arrow for react-slick to avoid DOM prop warnings
 const CustomNextArrow = (props) => {
@@ -119,9 +119,29 @@ export default function AllPosts() {
   const [modalImg, setModalImg] = useState(false); // Image modal visibility
   const [showImg, setShowImg] = useState(false); // Image to display
   const [page, setPage] = useState(1); // Pagination page
-
+  const [likedPosts, setLikedPosts] = useState([]);
   const { posts, loading } = useSelector((store) => store.postsReducer); // Get posts from Redux store
 
+
+   // Load data from localStorage as soon as the component starts
+    useEffect(() => {
+      const savedLikes = JSON.parse(localStorage.getItem("likedPosts")) || [];
+      setLikedPosts(savedLikes);
+    }, []);
+
+    // Update localStorage on change
+    useEffect(() => {
+      localStorage.setItem("likedPosts", JSON.stringify(likedPosts));
+    }, [likedPosts]);
+
+    // Function to toggle the like state
+    const toggleLike = (postId) => {
+      setLikedPosts((prev) =>
+        prev.includes(postId)
+          ? prev.filter((id) => id !== postId)
+          : [...prev, postId]
+      );
+    };
   // Fetch posts when component mounts or page changes
   useEffect(() => {
     dispatch(getPosts({ page, limit: 40 }));
@@ -281,96 +301,134 @@ export default function AllPosts() {
                 </Box>
               )}
 
-              {/* Map through first 10 posts to show as stories */}
-              {posts?.posts?.slice(0, 10)?.map((item) => (
-                <Box key={item._id} sx={{ px: 2 }}>
-                  <Box
-                    sx={{
-                      position: "relative",
-                      borderRadius: "18px",
-                      overflow: "hidden",
-                      cursor: "pointer",
-                      height: 230,
-                      minWidth: 140,
-                      backgroundImage: item?.image
-                        ? `url(${item.image})`
-                        : "linear-gradient(135deg, #1976d2, #42a5f5)",
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                      boxShadow: "0px 4px 10px rgba(0,0,0,0.15)",
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        transform: "translateY(-4px)",
-                        boxShadow: "0px 8px 15px rgba(0,0,0,0.25)",
-                      },
-                    }}
-                    onClick={() => handelModal(item._id)} // Open comment modal
-                  >
-                    {/* User avatar */}
+                {/* Map through first 10 posts to show as stories */}
+                {posts?.posts?.slice(0, 10)?.map((item) => (
+                  <Box key={item._id} sx={{ px: 2 }}>
                     <Box
                       sx={{
-                        position: "absolute",
-                        top: 12,
-                        left: 12,
-                        borderRadius: "50%",
-                        border: "3px solid #1976d2",
-                        width: 45,
-                        height: 45,
+                        position: "relative",
+                        borderRadius: "18px",
                         overflow: "hidden",
-                        bgcolor: "#fff",
+                        cursor: "pointer",
+                        height: 230,
+                        minWidth: 140,
+                        backgroundImage: item?.image
+                          ? `url(${item.image})`
+                          : "linear-gradient(135deg, #1976d2, #42a5f5)",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        boxShadow: "0px 4px 10px rgba(0,0,0,0.15)",
+                        transition: "all 0.3s ease",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: item?.image ? "flex-end" : "center",
+                        alignItems: "center",
+                        "&:hover": {
+                          transform: "translateY(-4px)",
+                          boxShadow: "0px 8px 15px rgba(0,0,0,0.25)",
+                        },
                       }}
+                      onClick={() => handelModal(item._id)}
                     >
-                      <img
-                        src={item?.user?.photo}
-                        alt={item?.user?.name}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    </Box>
-
-                    {/* Post text */}
-                    {item?.body && (
-                      <Typography
+                      {/*  Always the username picture */}
+                      <Box
                         sx={{
                           position: "absolute",
                           top: 12,
-                          right: 10,
-                          left: 65,
-                          fontSize: "0.8rem",
+                          left: 12,
+                          borderRadius: "50%",
+                          border: "3px solid #1976d2",
+                          width: 45,
+                          height: 45,
+                          overflow: "hidden",
+                          bgcolor: "#fff",
+                          zIndex: 2,
+                        }}
+                      >
+                        <img
+                          src={item?.user?.photo}
+                          alt={item?.user?.name}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      </Box>
+
+                    {/*   If there is a picture → description appears next to the user's picture */}
+                      {item?.image ? (
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: 12,
+                            left: 65,
+                            right: 12,
+                            bgcolor: "rgba(0,0,0,0.45)",
+                            borderRadius: "10px",
+                            p: "6px 8px",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontSize: "0.85rem",
+                              fontWeight: 500,
+                              color: "#fff",
+                              textShadow: "0 0 6px rgba(0,0,0,0.6)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              display: "-webkit-box",
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: "vertical",
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {item?.body || "No description available"}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        //   If there is no image → description appears in the text instead of the image
+                        <Typography
+                          sx={{
+                            px: 2,
+                            textAlign: "center",
+                            fontSize: "0.9rem",
+                            fontWeight: 500,
+                            color: "#fff",
+                            textShadow: "0 0 8px rgba(0,0,0,0.6)",
+                            maxHeight: "70%",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 4,
+                            WebkitBoxOrient: "vertical",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {item?.body || "No description available"}
+                        </Typography>
+                      )}
+
+                      {/*   Name of the post owner — always below */}
+                      <Typography
+                        sx={{
+                          position: "absolute",
+                          bottom: 10,
+                          left: 12,
+                          right: 12,
                           fontWeight: "bold",
                           color: "#fff",
                           textShadow: "0 0 5px rgba(0,0,0,0.7)",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
+                          fontSize: "0.9rem",
+                          textAlign: "left",
                         }}
                       >
-                        {item?.body}
+                        {item?.user?.name}
                       </Typography>
-                    )}
-
-                    {/* User name */}
-                    <Typography
-                      sx={{
-                        position: "absolute",
-                        bottom: 10,
-                        left: 12,
-                        right: 12,
-                        fontWeight: "bold",
-                        color: "#fff",
-                        textShadow: "0 0 5px rgba(0,0,0,0.7)",
-                        fontSize: "0.9rem",
-                        textAlign: "left",
-                      }}
-                    >
-                      {item?.user?.name}
-                    </Typography>
+                    </Box>
                   </Box>
-                </Box>
-              ))}
+                ))}
+
             </Slider>
           </Box>
 
@@ -390,7 +448,7 @@ export default function AllPosts() {
               <Card
                 key={item._id}
                 sx={{
-                  width: { xs: "90%", sm: 500, md: 800 },
+                  width: { xs: "90%", sm: 500, md: 700 },
                   my: 2,
                   boxShadow: 4,
                   borderRadius: 3,
@@ -438,15 +496,28 @@ export default function AllPosts() {
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
-                    my: 1,
+                    my: 0.5,
                   }}
                   disableSpacing
                 >
+                   {/* Like button */}
+                <IconButton onClick={() => toggleLike(item._id)} aria-label="like">
+                  <FavoriteIcon
+                    sx={{
+                      fontSize:36,
+                      color: likedPosts.includes(item._id) ? "#1976d2" : "#fff",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        transform: "scale(1.2)",
+                      },
+                    }}
+                  />
+                </IconButton>
                   <IconButton
                     onClick={() => handelModal(item._id)}
                     aria-label="comment"
                   >
-                    <InsertCommentIcon />
+                    <InsertCommentIcon  sx={{ fontSize:31}}/>
                   </IconButton>
                 </CardActions>
               </Card>
